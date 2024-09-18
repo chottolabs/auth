@@ -59,8 +59,8 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, verifierCookie)
 
 	// Generate the authorization URL with state and PKCE parameters
-	authURL := config.AuthCodeURL(state,
-		oauth2.AccessTypeOffline,
+	authURL := config.AuthCodeURL(
+		state,
 		code_challenge,
 	)
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
@@ -140,7 +140,7 @@ func generateStateOauthCookie(w http.ResponseWriter) (string, error) {
 	cookie := &http.Cookie{
 		Name:     "oauthstate",
 		Value:    state,
-		Expires:  time.Now().Add(365 * 24 * time.Hour),
+		Expires:  time.Now().Add(60 * 24 * time.Hour),
 		HttpOnly: true,
 		Path:     "/",
 		Secure:   false, // Set to true in production
