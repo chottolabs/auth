@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"log"
@@ -44,7 +43,9 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate PKCE verifier and challenge
-	codeVerifier, codeChallenge, err := generatePKCE()
+	verifier := oauth2.GenerateVerifier()
+	code_challenge := oauth2.S256ChallengeFromVerifier(verifier)
+
 	if err != nil {
 		log.Printf("Error generating PKCE parameters: %v", err)
 		http.Error(w, "Failed to generate PKCE parameters", http.StatusInternalServerError)
@@ -54,7 +55,7 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	// Store the code verifier in a secure cookie
 	verifierCookie := &http.Cookie{
 		Name:     "pkce_verifier",
-		Value:    codeVerifier,
+		Value:    verifier,
 		Expires:  time.Now().Add(10 * time.Minute), // PKCE verifier is short-lived
 		HttpOnly: true,
 		Path:     "/",
@@ -66,7 +67,7 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	// Generate the authorization URL with state and PKCE parameters
 	authURL := config.AuthCodeURL(state,
 		oauth2.AccessTypeOffline,
-		oauth2.SetAuthURLParam("code_challenge", codeChallenge),
+		oauth2.SetAuthURLParam("code_challenge", code_challenge),
 		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
 	)
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
@@ -155,21 +156,6 @@ func generateStateOauthCookie(w http.ResponseWriter) (string, error) {
 
 	http.SetCookie(w, cookie)
 	return state, nil
-}
-
-// generatePKCE generates a code verifier and its corresponding code challenge.
-// It returns both the verifier and the challenge.
-func generatePKCE() (verifier string, challenge string, err error) {
-	verifierBytes := make([]byte, 32)
-	if _, err := rand.Read(verifierBytes); err != nil {
-		return "", "", err
-	}
-	verifier = base64.RawURLEncoding.EncodeToString(verifierBytes)
-
-	hash := sha256.Sum256([]byte(verifier))
-	challenge = base64.RawURLEncoding.EncodeToString(hash[:])
-
-	return verifier, challenge, nil
 }
 
 // fetchGoogleUser retrieves user information from Google using the provided token.
