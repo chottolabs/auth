@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/chottolabs/simple-oauth/handlers"
 	"log"
 	"net/http"
+
+	"github.com/chottolabs/simple-oauth/handlers"
 )
 
 func main() {
@@ -17,7 +18,7 @@ func main() {
 	mux.HandleFunc("GET /auth/google/callback", handlers.GoogleCallback)
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf("localhost:4321"),
+		Addr:    fmt.Sprintf(":4321"),
 		Handler: mux,
 	}
 
