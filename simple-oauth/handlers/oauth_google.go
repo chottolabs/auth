@@ -44,13 +44,7 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Generate PKCE verifier and challenge
 	verifier := oauth2.GenerateVerifier()
-	code_challenge := oauth2.S256ChallengeFromVerifier(verifier)
-
-	if err != nil {
-		log.Printf("Error generating PKCE parameters: %v", err)
-		http.Error(w, "Failed to generate PKCE parameters", http.StatusInternalServerError)
-		return
-	}
+	code_challenge := oauth2.S256ChallengeOption(verifier)
 
 	// Store the code verifier in a secure cookie
 	verifierCookie := &http.Cookie{
@@ -67,8 +61,7 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	// Generate the authorization URL with state and PKCE parameters
 	authURL := config.AuthCodeURL(state,
 		oauth2.AccessTypeOffline,
-		oauth2.SetAuthURLParam("code_challenge", code_challenge),
-		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
+		code_challenge,
 	)
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 }
