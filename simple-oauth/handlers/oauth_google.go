@@ -22,7 +22,7 @@ type GoogleUser struct {
 }
 
 // Scopes: OAuth 2.0 scopes provide a way to limit the amount of access that is granted to an access token.
-var googleOauthConfig = &oauth2.Config{
+var config = &oauth2.Config{
 	RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URI"),
 	ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 	ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
@@ -35,7 +35,7 @@ const googleUserInfoURL = "https://www.googleapis.com/oauth2/v2/userinfo"
 func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 
 	// Create oauthState cookie
-	oauthState, err := generateStateOauthCookie(w)
+	state, err := generateStateOauthCookie(w)
 	if err != nil {
 		log.Printf("Error generating OAuth state cookie: %v", err)
 		http.Error(w, "Failed to generate OAuth state cookie", http.StatusInternalServerError)
@@ -46,7 +46,7 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		AuthCodeURL receive state that is a token to protect the user from CSRF attacks. You must always provide a non-empty string and
 		validate that it matches the the state query parameter on your redirect callback.
 	*/
-	authURL := googleOauthConfig.AuthCodeURL(oauthState)
+	authURL := config.AuthCodeURL(state)
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 }
 
@@ -77,6 +77,8 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 
 func generateStateOauthCookie(w http.ResponseWriter) (string, error) {
 	b := make([]byte, 16)
+
+	// Note: crypto/rand provides CSPRNG
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
@@ -98,12 +100,12 @@ func generateStateOauthCookie(w http.ResponseWriter) (string, error) {
 
 // fetchGoogleUser exchanges the authorization code for a token and retrieves the user's information from Google.
 func fetchGoogleUser(ctx context.Context, code string) (*GoogleUser, error) {
-	token, err := googleOauthConfig.Exchange(ctx, code)
+	token, err := config.Exchange(ctx, code)
 	if err != nil {
 		return nil, err
 	}
 
-	client := googleOauthConfig.Client(ctx, token)
+	client := config.Client(ctx, token)
 	resp, err := client.Get(googleUserInfoURL)
 	if err != nil {
 		return nil, err
