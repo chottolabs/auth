@@ -39,7 +39,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		cookie, err := r.Cookie("auth_token")
 		if err != nil {
 			if err == http.ErrNoCookie {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+				// http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
 			}
 			http.Error(w, "Bad Request", http.StatusBadRequest)

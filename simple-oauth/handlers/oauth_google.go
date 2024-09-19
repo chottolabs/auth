@@ -139,7 +139,7 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, jwtCookie)
 
-	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 // generateStateOauthCookie generates a random state string and stores it in a secure cookie

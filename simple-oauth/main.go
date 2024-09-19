@@ -19,10 +19,11 @@ func main() {
 
 	// Protected Routes
 	protectedMux := http.NewServeMux()
-	protectedMux.HandleFunc("GET /dashboard", dashboardHandler)
+	protectedMux.HandleFunc("GET /", rootHandler)
 
 	// Wrap the protected routes with the AuthMiddleware
-	mux.Handle("GET /dashboard", handlers.AuthMiddleware(protectedMux))
+	mux.Handle("GET /", handlers.AuthMiddleware(protectedMux))
+	mux.HandleFunc("GET /login", loginHandler)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":4321"),
@@ -37,8 +38,14 @@ func main() {
 	}
 }
 
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	fmt.Fprintf(w, `<a href="/auth/google/login">Login with Google</a>`)
+	return
+}
+
 // Example protected handler
-func dashboardHandler(w http.ResponseWriter, r *http.Request) {
+func rootHandler(w http.ResponseWriter, r *http.Request) {
 	user := handlers.UserFromContext(r.Context())
 	if user == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
