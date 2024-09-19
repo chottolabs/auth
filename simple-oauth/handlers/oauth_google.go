@@ -17,7 +17,7 @@ import (
 type GoogleUser struct {
 	Email         string `json:"email"`
 	VerifiedEmail bool   `json:"verified_email"`
-	Name          string `json:"name"`
+	Name          string `json:"name,omitempty"`
 	Picture       string `json:"picture"`
 }
 
@@ -119,12 +119,27 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: Implement your user handling logic here (e.g., create or fetch the user from your database)
 
-	// Respond with the user information as JSON
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(user); err != nil {
-		log.Printf("Error encoding user data: %v", err)
-		http.Error(w, "Failed to encode user data", http.StatusInternalServerError)
+	// Generate JWT for the authenticated user
+	jwtToken, err := generateJWT(user)
+	if err != nil {
+		log.Printf("Error generating JWT: %v", err)
+		http.Error(w, "Failed to generate JWT", http.StatusInternalServerError)
+		return
 	}
+
+	// Set the JWT as an HTTP-only cookie
+	jwtCookie := &http.Cookie{
+		Name:     "auth_token",
+		Value:    jwtToken,
+		Expires:  time.Now().Add(24 * time.Hour), // Token validity
+		HttpOnly: true,
+		Path:     "/",
+		Secure:   false, // Set to true in production
+		SameSite: http.SameSiteLaxMode,
+	}
+	http.SetCookie(w, jwtCookie)
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 // generateStateOauthCookie generates a random state string and stores it in a secure cookie
