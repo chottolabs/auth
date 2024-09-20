@@ -4,6 +4,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -19,8 +20,6 @@ const (
 )
 
 var issuer = os.Getenv("ISSUER")
-
-// JWT configuration
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 // CustomClaims defines the structure of the JWT claims.
@@ -30,6 +29,13 @@ type CustomClaims struct {
 	Email         string `json:"email"`
 	Name          string `json:"name,omitempty"`
 	jwt.RegisteredClaims
+}
+
+func init() {
+	const minSecretLength = 32 // 32 bytes = 256 bits
+	if len(jwtSecret) < minSecretLength {
+		log.Fatalf("JWT_SECRET must be at least %d bytes long", minSecretLength)
+	}
 }
 
 // AuthMiddleware verifies the JWT and adds user information to the request context
