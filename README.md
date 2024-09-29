@@ -15,6 +15,12 @@ minimal example for google oauth 2.0
 - implements JWT (defaults to HS256, ensure `32 * 8 = 256`)
 
 ```sh
+GOOGLE_REDIRECT_URI=http://localhost:4321/auth/google/callback
+GOOGLE_CLIENT_ID=***.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-***
+```
+
+```sh
 JWT_SECRET=$(openssl rand -base64 32) go run main.go
 ```
 
