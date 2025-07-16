@@ -130,7 +130,7 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		Value:    accessToken,
 		HttpOnly: true,
 		Secure:   false, // Set to true in production with HTTPS
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 		MaxAge:   int(config.AccessTokenExpiry.Seconds()),
 		Path:     "/",
 	}
@@ -140,7 +140,7 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		Value:    refreshToken,
 		HttpOnly: true,
 		Secure:   false, // Set to true in production with HTTPS
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 		MaxAge:   int(config.RefreshTokenExpiry.Seconds()),
 		Path:     "/",
 	}
@@ -148,30 +148,10 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, accessCookie)
 	http.SetCookie(w, refreshCookie)
 	
-	// Log successful authentication
+	// Log successful authentication and redirect to profile
 	log.Printf("User %s authenticated successfully, redirecting to profile", user.ID)
 	
-	// Create a simple success page that redirects to profile
-	html := `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Authentication Success</title>
-    <script>
-        // Clean URL and redirect to profile
-        setTimeout(function() {
-            window.location.href = '/profile';
-        }, 100);
-    </script>
-</head>
-<body>
-    <p>Authentication successful! Redirecting to your profile...</p>
-    <p>If you are not redirected automatically, <a href="/profile">click here</a>.</p>
-</body>
-</html>`
-	
-	w.Header().Set("Content-Type", "text/html")
-	w.Write([]byte(html))
+	http.Redirect(w, r, "/profile", http.StatusSeeOther)
 }
 
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
@@ -313,7 +293,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Value:    "",
 		HttpOnly: true,
 		Secure:   false,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 		MaxAge:   -1,
 		Path:     "/",
 	})
@@ -323,7 +303,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Value:    "",
 		HttpOnly: true,
 		Secure:   false,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 		MaxAge:   -1,
 		Path:     "/",
 	})
