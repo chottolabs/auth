@@ -3,16 +3,21 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"html/template"
 	"net/http"
 
 	"minimal-oauth/models"
 )
 
-type ProtectedHandler struct{}
+type ProtectedHandler struct{
+	profileTemplate *template.Template
+}
 
 func NewProtectedHandler() *ProtectedHandler {
-	return &ProtectedHandler{}
+	profileTemplate := template.Must(template.ParseFiles("templates/profile.html"))
+	return &ProtectedHandler{
+		profileTemplate: profileTemplate,
+	}
 }
 
 func (h *ProtectedHandler) Profile(w http.ResponseWriter, r *http.Request) {
@@ -30,43 +35,22 @@ func (h *ProtectedHandler) Profile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return HTML page for browser requests
-	html := fmt.Sprintf(`
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Profile - Minimal OAuth</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .profile { background: #f5f5f5; padding: 20px; border-radius: 8px; }
-        .user-info { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
-        .user-info img { border-radius: 50%%; width: 80px; height: 80px; }
-        .logout { color: #dc3545; text-decoration: none; }
-        .logout:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-    <h1>Welcome to your Profile</h1>
-    <div class="profile">
-        <div class="user-info">
-            <img src="%s" alt="Profile Picture">
-            <div>
-                <h2>%s</h2>
-                <p>Email: %s</p>
-                <p>User ID: %s</p>
-                <p>Login Time: %s</p>
-            </div>
-        </div>
-        <nav>
-            <a href="/dashboard">Dashboard</a> |
-            <a href="/auth/logout" class="logout">Logout</a>
-        </nav>
-    </div>
-</body>
-</html>
-	`, user.Picture, user.Name, user.Email, user.ID, user.LoginAt.Format("2006-01-02 15:04:05"))
+	data := struct {
+		Name      string
+		Email     string
+		ID        string
+		Picture   string
+		LoginTime string
+	}{
+		Name:      user.Name,
+		Email:     user.Email,
+		ID:        user.ID,
+		Picture:   user.Picture,
+		LoginTime: user.LoginAt.Format("2006-01-02 15:04:05"),
+	}
 
 	w.Header().Set("Content-Type", "text/html")
-	w.Write([]byte(html))
+	h.profileTemplate.Execute(w, data)
 }
 
 func (h *ProtectedHandler) Dashboard(w http.ResponseWriter, r *http.Request) {

@@ -99,8 +99,11 @@ A minimal OAuth2 client implementation for Google authentication using modern Go
 ├── handlers/
 │   ├── auth.go         # OAuth flow with PKCE
 │   └── protected.go    # Protected route handlers
-└── middleware/
-    └── auth.go         # JWT validation middleware
+├── middleware/
+│   └── auth.go         # JWT validation middleware
+└── templates/
+    ├── home.html       # Home page template
+    └── profile.html    # Profile page template
 ```
 
 ## Token Flow
